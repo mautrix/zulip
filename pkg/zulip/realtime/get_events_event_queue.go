@@ -109,9 +109,9 @@ func LastEventID(id int) GetEventsEventQueueOption {
 	}
 }
 
-func DontBlock() GetEventsEventQueueOption {
+func DontBlock(db bool) GetEventsEventQueueOption {
 	return func(geeqo *getEventsEventQueueOptions) {
-		geeqo.dontBlock = true
+		geeqo.dontBlock = db
 	}
 }
 

@@ -42,41 +42,41 @@ func (zc *ZulipClient) pollQueue(ctx context.Context) {
 		(*oldCancel)()
 	}
 	zc.pollStopped.Store(&stopChan)
-	queueID, lastEventID, err := zc.registerQueue(ctx, rtc, false)
-	if err != nil {
-		log.Err(err).Msg("Failed to register event queue")
-		zc.UserLogin.BridgeState.Send(status.BridgeState{
-			StateEvent: status.StateUnknownError,
-			Error:      "zulip-queue-register-error",
-			Info: map[string]any{
-				"go_error": err.Error(),
-			},
-		})
-		return
-	}
-	// TODO only send this after first successful poll, except if we just registered
-	zc.UserLogin.BridgeState.Send(status.BridgeState{StateEvent: status.StateConnected})
+	zc.UserLogin.BridgeState.Send(status.BridgeState{StateEvent: status.StateConnecting})
+
+	var connectedSent bool
 	meta := zc.UserLogin.Metadata.(*zid.UserLoginMetadata)
 	for {
-		resp, err := rtc.GetEventsEventQueue(ctx, queueID, realtime.LastEventID(lastEventID))
+		if meta.QueueID == "" {
+			err := zc.registerQueue(ctx, rtc)
+			if err != nil {
+				log.Err(err).Msg("Failed to register event queue")
+				zc.UserLogin.BridgeState.Send(status.BridgeState{
+					StateEvent: status.StateUnknownError,
+					Error:      "zulip-queue-register-error",
+					Info: map[string]any{
+						"go_error": err.Error(),
+					},
+				})
+				connectedSent = false
+				// TODO retry on network errors, bad credentials on auth errors
+				return
+			}
+			zc.UserLogin.BridgeState.Send(status.BridgeState{StateEvent: status.StateConnected})
+			connectedSent = true
+		}
+		resp, err := rtc.GetEventsEventQueue(
+			ctx, meta.QueueID, realtime.LastEventID(meta.LastEventID), realtime.DontBlock(!connectedSent),
+		)
 		if err != nil {
 			log.Err(err).Msg("Failed to poll event queue")
 			if zulip.IsCode(err, zulip.ErrBadEventQueueID) {
-				log.Debug().Msg("Re-registering event queue")
-				queueID, lastEventID, err = zc.registerQueue(ctx, rtc, true)
+				meta.QueueID = ""
+				err = zc.UserLogin.Save(ctx)
 				if err != nil {
-					log.Err(err).Msg("Failed to register event queue")
-					zc.UserLogin.BridgeState.Send(status.BridgeState{
-						StateEvent: status.StateUnknownError,
-						Error:      "zulip-queue-register-error",
-						Info: map[string]any{
-							"go_error": err.Error(),
-						},
-					})
-					return
-				} else {
-					continue
+					log.Err(err).Msg("Failed to save cleared queue ID")
 				}
+				continue
 			}
 			zc.UserLogin.BridgeState.Send(status.BridgeState{
 				StateEvent: status.StateTransientDisconnect,
@@ -85,6 +85,7 @@ func (zc *ZulipClient) pollQueue(ctx context.Context) {
 					"go_error": err.Error(),
 				},
 			})
+			connectedSent = false
 			select {
 			case <-time.After(10 * time.Second):
 			case <-ctx.Done():
@@ -92,16 +93,19 @@ func (zc *ZulipClient) pollQueue(ctx context.Context) {
 			}
 			continue
 		}
+		if !connectedSent {
+			zc.UserLogin.BridgeState.Send(status.BridgeState{StateEvent: status.StateConnected})
+			connectedSent = true
+		}
 		for _, evt := range resp.Events {
 			ok := zc.handleZulipEvent(ctx, evt)
 			if !ok {
 				log.Warn().Int("event_id", evt.EventID()).Msg("Failed to handle event")
 				break
 			}
-			lastEventID = evt.EventID()
+			meta.LastEventID = evt.EventID()
 		}
-		if lastEventID != meta.LastEventID {
-			meta.LastEventID = lastEventID
+		if len(resp.Events) > 0 {
 			err = zc.UserLogin.Save(ctx)
 			if err != nil {
 				log.Err(err).Msg("Failed to save last event ID")
@@ -110,11 +114,7 @@ func (zc *ZulipClient) pollQueue(ctx context.Context) {
 	}
 }
 
-func (zc *ZulipClient) registerQueue(ctx context.Context, rtc *realtime.Service, force bool) (string, int, error) {
-	meta := zc.UserLogin.Metadata.(*zid.UserLoginMetadata)
-	if meta.QueueID != "" && meta.LastEventID != 0 && !force {
-		return meta.QueueID, meta.LastEventID, nil
-	}
+func (zc *ZulipClient) registerQueue(ctx context.Context, rtc *realtime.Service) error {
 	resp, err := rtc.RegisterEventQueue(
 		ctx,
 		realtime.EventTypes(
@@ -147,9 +147,19 @@ func (zc *ZulipClient) registerQueue(ctx context.Context, rtc *realtime.Service,
 		realtime.ApplyMarkdown(true),
 	)
 	if err != nil {
-		return "", 0, fmt.Errorf("failed to register event queue: %w", err)
+		zerolog.Ctx(ctx).Err(err).Msg("Failed to register event queue")
+		zc.UserLogin.BridgeState.Send(status.BridgeState{
+			StateEvent: status.StateUnknownError,
+			Error:      "zulip-queue-register-error",
+			Info: map[string]any{
+				"go_error": err.Error(),
+			},
+		})
+		return fmt.Errorf("failed to register event queue: %w", err)
 	}
 	zerolog.Ctx(ctx).Debug().Any("queue_register_resp", resp).Msg("Registered queue")
+	meta := zc.UserLogin.Metadata.(*zid.UserLoginMetadata)
 	meta.QueueID = resp.QueueID
-	return resp.QueueID, resp.LastEventID, nil
+	meta.LastEventID = resp.LastEventID
+	return nil
 }

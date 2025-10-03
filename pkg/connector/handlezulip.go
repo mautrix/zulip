@@ -21,6 +21,8 @@ func (zc *ZulipClient) handleZulipEvent(ctx context.Context, rawEvt events.Event
 	log := zerolog.Ctx(ctx)
 	log.Trace().Any("data", rawEvt).Msg("Event data")
 	switch evt := rawEvt.(type) {
+	case *events.Heartbeat:
+		return true
 	case *events.UserTopic:
 		if evt.TopicName == "" {
 			return true

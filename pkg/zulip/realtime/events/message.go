@@ -24,7 +24,7 @@ type MessageData struct {
 	ContentType      string           `json:"content_type"`
 	DisplayRecipient DisplayRecipient `json:"display_recipient"`
 	IsMeMessage      bool             `json:"is_me_message"`
-	Reactions        []Reaction       `json:"reactions"`
+	Reactions        []ReactionData   `json:"reactions"`
 	RecipientID      int              `json:"recipient_id"`
 	SenderEmail      string           `json:"sender_email"`
 	SenderFullName   string           `json:"sender_full_name"`
@@ -67,12 +67,6 @@ func (dr *DisplayRecipient) UnmarshalJSON(b []byte) error {
 	}
 
 	return errors.New("failed to unmarshal DisplayRecipient")
-}
-
-type Reaction struct {
-	EmojiName    string `json:"emoji_name"`
-	EmojiCode    string `json:"emoji_code"`
-	ReactionType string `json:"reaction_type"`
 }
 
 type TopicLinks struct {

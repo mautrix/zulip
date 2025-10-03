@@ -8,12 +8,13 @@ import (
 	"maunium.net/go/mautrix/bridgev2/database"
 	"maunium.net/go/mautrix/bridgev2/networkid"
 
+	"go.mau.fi/mautrix-zulip/pkg/zid"
 	"go.mau.fi/mautrix-zulip/pkg/zulip/messages"
 	"go.mau.fi/mautrix-zulip/pkg/zulip/messages/recipient"
 )
 
 func (zc *ZulipClient) HandleMatrixMessage(ctx context.Context, msg *bridgev2.MatrixMessage) (message *bridgev2.MatrixMessageResponse, err error) {
-	channelID, userIDs, err := parsePortalID(msg.Portal.ID)
+	channelID, userIDs, err := zid.ParsePortalID(msg.Portal.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +27,7 @@ func (zc *ZulipClient) HandleMatrixMessage(ctx context.Context, msg *bridgev2.Ma
 		if msg.ThreadRoot.ThreadRoot != "" {
 			threadRootID = msg.ThreadRoot.ThreadRoot
 		}
-		topicID, _ = parseMessageID(threadRootID)
+		topicID, _ = zid.ParseMessageID(threadRootID)
 		if topicID == "" {
 			return nil, fmt.Errorf("invalid thread root")
 		}
@@ -41,8 +42,8 @@ func (zc *ZulipClient) HandleMatrixMessage(ctx context.Context, msg *bridgev2.Ma
 	}
 	return &bridgev2.MatrixMessageResponse{
 		DB: &database.Message{
-			ID:         makeMessageID(resp.ID),
-			SenderID:   makeUserID(zc.ownUserID),
+			ID:         zid.MakeMessageID(resp.ID),
+			SenderID:   zid.MakeUserID(zc.ownUserID),
 			ThreadRoot: threadRootID,
 		},
 		StreamOrder: int64(resp.ID),

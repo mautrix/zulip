@@ -5,6 +5,8 @@ import (
 
 	"maunium.net/go/mautrix/bridgev2"
 	"maunium.net/go/mautrix/event"
+
+	"go.mau.fi/mautrix-zulip/pkg/zid"
 )
 
 func (zc *ZulipConnector) GetBridgeInfoVersion() (info, capabilities int) {
@@ -26,7 +28,7 @@ func (zc *ZulipClient) GetCapabilities(ctx context.Context, portal *bridgev2.Por
 		ID:     "fi.mau.zulip.capabilities.2025_10_02",
 		Thread: event.CapLevelFullySupported,
 	}
-	_, userIDs, _ := parsePortalID(portal.ID)
+	_, userIDs, _ := zid.ParsePortalID(portal.ID)
 	if userIDs != nil {
 		caps.ID += "+dm"
 		caps.Thread = event.CapLevelUnsupported

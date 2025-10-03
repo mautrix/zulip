@@ -2,6 +2,7 @@ package zulip
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -106,14 +107,6 @@ func (a APIResponseBase) Code() string {
 	return a.code
 }
 
-type ErrorResp struct {
-	Inner APIResponse
-}
-
-func (a ErrorResp) Error() string {
-	return fmt.Sprintf("HTTP %d / %s: %s", a.Inner.HTTPCode(), a.Inner.Code(), a.Inner.Msg())
-}
-
 // IsError returns true if the result is an error.
 func (a APIResponseBase) IsError() bool {
 	return a.result == ResultError
@@ -184,4 +177,25 @@ func (a *APIResponseBase) UnmarshalJSON(b []byte) error {
 
 func (a APIResponseBase) MarshalJSON() ([]byte, error) {
 	return json.Marshal(a.allFields)
+}
+
+type ErrorResp struct {
+	Inner APIResponse
+}
+
+func (a ErrorResp) Error() string {
+	return fmt.Sprintf("HTTP %d / %s: %s", a.Inner.HTTPCode(), a.Inner.Code(), a.Inner.Msg())
+}
+
+const ErrBadEventQueueID = "BAD_EVENT_QUEUE_ID"
+
+func IsCode(err error, code string) bool {
+	if err == nil {
+		return false
+	}
+	var e ErrorResp
+	if !errors.As(err, &e) {
+		return false
+	}
+	return e.Inner.Code() == code
 }

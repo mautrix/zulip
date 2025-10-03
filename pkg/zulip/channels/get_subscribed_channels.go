@@ -13,22 +13,24 @@ type GetSubscribedChannelsResponse struct {
 	getSubscribedChannelsResponseData
 }
 
+type SubscribedChannel struct {
+	AudibleNotifications bool   `json:"audible_notifications"`
+	Color                string `json:"color"`
+	CreatorID            int    `json:"creator_id"`
+	Description          string `json:"description"`
+	DesktopNotifications bool   `json:"desktop_notifications"`
+	InviteOnly           bool   `json:"invite_only"`
+	IsArchived           bool   `json:"is_archived"`
+	IsMuted              bool   `json:"is_muted"`
+	Name                 string `json:"name"`
+	PinToTop             bool   `json:"pin_to_top"`
+	PushNotifications    bool   `json:"push_notifications"`
+	StreamID             int    `json:"stream_id"`
+	Subscribers          []int  `json:"subscribers"`
+}
+
 type getSubscribedChannelsResponseData struct {
-	Subscriptions []struct {
-		AudibleNotifications bool   `json:"audible_notifications"`
-		Color                string `json:"color"`
-		CreatorID            int    `json:"creator_id"`
-		Description          string `json:"description"`
-		DesktopNotifications bool   `json:"desktop_notifications"`
-		InviteOnly           bool   `json:"invite_only"`
-		IsArchived           bool   `json:"is_archived"`
-		IsMuted              bool   `json:"is_muted"`
-		Name                 string `json:"name"`
-		PinToTop             bool   `json:"pin_to_top"`
-		PushNotifications    bool   `json:"push_notifications"`
-		StreamID             int    `json:"stream_id"`
-		Subscribers          []int  `json:"subscribers"`
-	} `json:"subscriptions"`
+	Subscriptions []SubscribedChannel `json:"subscriptions"`
 }
 
 func (g *GetSubscribedChannelsResponse) UnmarshalJSON(b []byte) error {

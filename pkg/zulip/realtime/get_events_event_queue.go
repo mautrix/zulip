@@ -75,6 +75,8 @@ func (g *GetEventsEventQueueResponse) UnmarshalJSON(data []byte) error {
 			ev = &events.UserTopic{}
 		case events.UserStatusType:
 			ev = &events.UserStatus{}
+		case events.ReactionType:
+			ev = &events.Reaction{}
 		default:
 			ev = &events.Unknown{}
 		}

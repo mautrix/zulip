@@ -11,6 +11,7 @@ import (
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/bridgev2"
 
+	"go.mau.fi/mautrix-zulip/pkg/zid"
 	"go.mau.fi/mautrix-zulip/pkg/zulip"
 )
 
@@ -25,7 +26,7 @@ type ZulipClient struct {
 }
 
 func (zc *ZulipConnector) LoadUserLogin(ctx context.Context, login *bridgev2.UserLogin) error {
-	meta := login.Metadata.(*UserLoginMetadata)
+	meta := login.Metadata.(*zid.UserLoginMetadata)
 	httpClient := &http.Client{Timeout: 180 * time.Second}
 	zulipLog := login.Log.With().Str("component", "zulip").Logger()
 	cli, err := zulip.NewClient(
@@ -41,7 +42,7 @@ func (zc *ZulipConnector) LoadUserLogin(ctx context.Context, login *bridgev2.Use
 		Main:      zc,
 		Client:    cli,
 		UserLogin: login,
-		ownUserID: parseUserLoginID(login.ID),
+		ownUserID: zid.ParseUserLoginID(login.ID),
 	}
 	return nil
 }

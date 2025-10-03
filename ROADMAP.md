@@ -1,6 +1,6 @@
 # Features & roadmap
 * Matrix → Zulip
-  * [x] Message content
+  * [ ] Message content
     * [x] Plain text
     * [ ] Formatted messages
     * [ ] Media/files
@@ -16,11 +16,12 @@
 * Zulip → Matrix
   * [ ] Message content
     * [x] Plain text
-    * [ ] Formatted messages
-    * [ ] Media/files
+    * [x] Formatted messages
+    * [x] Media/files
     * [ ] Polls
+    * [ ] Todo lists
   * [ ] Message deletions
-  * [ ] Reactions
+  * [x] Reactions
   * [x] Avatars
   * [ ] Typing notifications
   * [ ] Read receipts

@@ -9,6 +9,7 @@ import (
 	"maunium.net/go/mautrix/bridgev2/database"
 	"maunium.net/go/mautrix/bridgev2/status"
 
+	"go.mau.fi/mautrix-zulip/pkg/zid"
 	"go.mau.fi/mautrix-zulip/pkg/zulip"
 	"go.mau.fi/mautrix-zulip/pkg/zulip/users"
 )
@@ -64,7 +65,7 @@ func (zl *ZulipLogin) Start(ctx context.Context) (*bridgev2.LoginStep, error) {
 func (zl *ZulipLogin) Cancel() {}
 
 func (zl *ZulipLogin) SubmitUserInput(ctx context.Context, input map[string]string) (*bridgev2.LoginStep, error) {
-	meta := &UserLoginMetadata{
+	meta := &zid.UserLoginMetadata{
 		URL:   input["url"],
 		Email: input["email"],
 		Token: input["token"],
@@ -81,10 +82,10 @@ func (zl *ZulipLogin) SubmitUserInput(ctx context.Context, input map[string]stri
 		return nil, err
 	}
 	ul, err := zl.User.NewLogin(ctx, &database.UserLogin{
-		ID:         makeUserLoginID(me.UserID),
-		RemoteName: me.Email,
+		ID:         zid.MakeUserLoginID(me.UserID),
+		RemoteName: me.DeliveryEmail,
 		RemoteProfile: status.RemoteProfile{
-			Email: me.Email,
+			Email: me.DeliveryEmail,
 			Name:  me.FullName,
 			// TODO reupload avatar
 			Avatar: "",

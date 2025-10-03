@@ -2,6 +2,8 @@ package connector
 
 import (
 	"maunium.net/go/mautrix/bridgev2/database"
+
+	"go.mau.fi/mautrix-zulip/pkg/zid"
 )
 
 func (zc *ZulipConnector) GetDBMetaTypes() database.MetaTypes {
@@ -11,16 +13,7 @@ func (zc *ZulipConnector) GetDBMetaTypes() database.MetaTypes {
 		Message:  nil,
 		Reaction: nil,
 		UserLogin: func() any {
-			return &UserLoginMetadata{}
+			return &zid.UserLoginMetadata{}
 		},
 	}
-}
-
-type UserLoginMetadata struct {
-	URL   string `json:"url"`
-	Email string `json:"email"`
-	Token string `json:"token"`
-
-	QueueID     string `json:"queue_id,omitempty"`
-	LastEventID int    `json:"last_event_id,omitempty"`
 }

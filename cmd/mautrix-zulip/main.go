@@ -19,7 +19,7 @@ func main() {
 		Name:        "mautrix-zulip",
 		Description: "A Matrix-Zulip bridge",
 		URL:         "https://github.com/mautrix/zulip",
-		Version:     "25.10",
+		Version:     "25.11",
 		SemCalVer:   true,
 		Connector:   &connector.ZulipConnector{},
 	}

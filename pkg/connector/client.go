@@ -19,6 +19,7 @@ type ZulipClient struct {
 	Main      *ZulipConnector
 	UserLogin *bridgev2.UserLogin
 	Client    *zulip.Client
+        ServerURL string
 
 	stopPoll    atomic.Pointer[context.CancelFunc]
 	pollStopped atomic.Pointer[chan struct{}]
@@ -43,6 +44,7 @@ func (zc *ZulipConnector) LoadUserLogin(ctx context.Context, login *bridgev2.Use
 		Client:    cli,
 		UserLogin: login,
 		ownUserID: zid.ParseUserLoginID(login.ID),
+                ServerURL: meta.URL,   // ← добавить здесь
 	}
 	return nil
 }

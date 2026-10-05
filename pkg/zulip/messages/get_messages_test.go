@@ -98,7 +98,7 @@ func TestGetMessages(t *testing.T) {
 		"narrow":          `[{"operator":"channel","operand":"Verona","negated":false},{"operator":"sender","operand":"iago@zulip.com","negated":false}]`,
 		"client_gravatar": true,
 		"apply_markdown":  true,
-		"message_ids":     []int{16, 21},
+		"message_ids":     "[16,21]",
 	}
 
 	resp, err := messagesSvc.GetMessages(context.Background(),

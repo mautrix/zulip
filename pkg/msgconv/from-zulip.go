@@ -96,7 +96,7 @@ func attachmentToMatrixWithErrors(
 	}
 	req.Header.Set("User-Agent", mautrix.DefaultUserAgent)
 	req.Header.Set("Accept", "*/*")
-	if strings.HasPrefix(attachment.URL, meta.URL) {
+	if strings.HasPrefix(attachment.URL, strings.TrimSuffix(meta.URL, "/")+"/") {
 		req.SetBasicAuth(meta.Email, meta.Token)
 	}
 	content := &event.MessageEventContent{

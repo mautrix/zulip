@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"go.mau.fi/mautrix-zulip/pkg/zulip"
@@ -31,16 +30,14 @@ func (g *GetAllChannelsResponse) UnmarshalJSON(b []byte) error {
 }
 
 // GetAllChannels Get all channels that the user has access to.
-func (svc *Service) GetAllChannels(ctx context.Context, streamID int) (*GetAllChannelsResponse, error) {
+func (svc *Service) GetAllChannels(ctx context.Context) (*GetAllChannelsResponse, error) {
 	const (
 		method = http.MethodGet
-		path   = "/api/v1/streams/%d/members"
+		path   = "/api/v1/streams"
 	)
 
-	patchPath := fmt.Sprintf(path, streamID)
-
 	resp := GetAllChannelsResponse{}
-	if err := svc.client.DoRequest(ctx, method, patchPath, nil, &resp); err != nil {
+	if err := svc.client.DoRequest(ctx, method, path, nil, &resp); err != nil {
 		return nil, err
 	}
 

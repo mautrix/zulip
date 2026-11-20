@@ -76,7 +76,7 @@ type Message struct {
 	Type         string   `json:"type"`
 	Flags        []string `json:"flags"`
 	MatchContent string   `json:"match_content"`
-	MathSubject  string   `json:"match_subject"`
+	MatchSubject string   `json:"match_subject"`
 }
 
 type DisplayRecipient struct {
@@ -258,7 +258,12 @@ func (svc *Service) GetMessages(ctx context.Context, options ...GetMessageOption
 	}
 
 	if opts.messageIDs.value != nil {
-		msg[opts.messageIDs.fieldName] = opts.messageIDs.value
+		messageIDsJSON, err := json.Marshal(opts.messageIDs.value)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling message IDs: %w", err)
+		}
+
+		msg[opts.messageIDs.fieldName] = string(messageIDsJSON)
 	}
 
 	resp := GetMessagesResponse{}

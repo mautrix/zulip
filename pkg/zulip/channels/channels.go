@@ -44,6 +44,6 @@ type ChannelInfo struct {
 	StreamID                   int    `json:"stream_id"`                     // 2,
 	StreamPostPolicy           int    `json:"stream_post_policy"`            // 1,
 	StreamWeeklyTraffic        int    `json:"stream_weekly_traffic"`         // null
-	TopicPolicy                string `json:"topic_policy"`
+	TopicsPolicy               string `json:"topics_policy"`
 	// TODO permissions and other things
 }

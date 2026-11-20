@@ -2,6 +2,7 @@ package connector
 
 import (
 	"context"
+        "strings"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -94,53 +95,56 @@ func (zc *ZulipClient) wrapChannelInfo(channel channels.ChannelInfo, members []i
 }
 
 func (zc *ZulipClient) GetUserInfo(ctx context.Context, ghost *bridgev2.Ghost) (*bridgev2.UserInfo, error) {
-	user, err := users.NewService(zc.Client).GetUser(ctx, zid.ParseUserID(ghost.ID))
-	if err != nil {
-		return nil, err
-	}
-	return wrapUserInfo(user.User)
+        user, err := users.NewService(zc.Client).GetUser(ctx, zid.ParseUserID(ghost.ID))
+        if err != nil {
+                return nil, err
+        }
+        return wrapUserInfo(zc.ServerURL, user.User)
 }
 
 var AvatarClient = &http.Client{
 	Timeout: 20 * time.Second,
 }
 
-func wrapUserInfo(user users.UserData) (*bridgev2.UserInfo, error) {
-	var identifiers []string
-	if user.DeliveryEmail != "" {
-		identifiers = []string{"mailto:" + user.DeliveryEmail}
-	}
-	return &bridgev2.UserInfo{
-		Identifiers: identifiers,
-		Name:        &user.FullName,
-		Avatar:      wrapAvatar(user.AvatarVersion, user.AvatarURL, user.DeliveryEmail),
-		IsBot:       &user.IsBot,
-	}, nil
+func wrapUserInfo(serverURL string, user users.UserData) (*bridgev2.UserInfo, error) {
+        var identifiers []string
+        if user.DeliveryEmail != "" {
+                identifiers = []string{"mailto:" + user.DeliveryEmail}
+        }
+        return &bridgev2.UserInfo{
+                Identifiers: identifiers,
+                Name:        &user.FullName,
+                Avatar:      wrapAvatar(serverURL, user.AvatarVersion, user.AvatarURL, user.DeliveryEmail),
+                IsBot:       &user.IsBot,
+        }, nil
 }
 
-func wrapAvatar(version int, url, email string) *bridgev2.Avatar {
-	if url == "" {
-		if email == "" {
-			return nil
-		}
-		emailHash := sha256.Sum256([]byte(email))
-		url = fmt.Sprintf("https://www.gravatar.com/avatar/%x", emailHash[:])
-	}
-	return &bridgev2.Avatar{
-		ID: networkid.AvatarID(strconv.Itoa(version)),
-		Get: func(ctx context.Context) ([]byte, error) {
-			req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-			if err != nil {
-				return nil, err
-			}
-			req.Header.Set("User-Agent", mautrix.DefaultUserAgent)
-			resp, err := AvatarClient.Do(req)
-			if err != nil {
-				return nil, err
-			} else if resp.StatusCode >= 300 {
-				return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
-			}
-			return io.ReadAll(resp.Body)
-		},
-	}
+func wrapAvatar(serverURL string, version int, avatarURL, email string) *bridgev2.Avatar {
+        url := avatarURL
+        if url == "" {
+                if email == "" {
+                        return nil
+                }
+                emailHash := sha256.Sum256([]byte(email))
+                url = fmt.Sprintf("https://www.gravatar.com/avatar/%x", emailHash[:])
+        } else if strings.HasPrefix(url, "/") {
+                url = strings.TrimRight(serverURL, "/") + url  // ← вот фикс
+        }
+        return &bridgev2.Avatar{
+                ID: networkid.AvatarID(strconv.Itoa(version)),
+                Get: func(ctx context.Context) ([]byte, error) {
+                        req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+                        if err != nil {
+                                return nil, err
+                        }
+                        req.Header.Set("User-Agent", mautrix.DefaultUserAgent)
+                        resp, err := AvatarClient.Do(req)
+                        if err != nil {
+                                return nil, err
+                        } else if resp.StatusCode >= 300 {
+                                return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
+                        }
+                        return io.ReadAll(resp.Body)
+                },
+        }
 }

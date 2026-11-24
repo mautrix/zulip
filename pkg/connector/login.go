@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"go.mau.fi/util/l10n"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/bridgev2"
 	"maunium.net/go/mautrix/bridgev2/database"
@@ -15,8 +16,8 @@ import (
 )
 
 var loginFlows = []bridgev2.LoginFlow{{
-	Name:        "API token",
-	Description: "Login with your Zulip email and API token.",
+	Name:        msgFlowAPITokenName.Message(),
+	Description: msgFlowAPITokenDescription.Message(),
 	ID:          "apitoken",
 }}
 
@@ -40,22 +41,21 @@ var _ bridgev2.LoginProcessUserInput = (*ZulipLogin)(nil)
 
 func (zl *ZulipLogin) Start(ctx context.Context) (*bridgev2.LoginStep, error) {
 	return &bridgev2.LoginStep{
-		Type:         bridgev2.LoginStepTypeUserInput,
-		StepID:       "fi.mau.zulip.apitoken",
-		Instructions: "",
+		Type:   bridgev2.LoginStepTypeUserInput,
+		StepID: "fi.mau.zulip.apitoken",
 		UserInputParams: &bridgev2.LoginUserInputParams{
 			Fields: []bridgev2.LoginInputDataField{{
 				Type: bridgev2.LoginInputFieldTypeURL,
 				ID:   "url",
-				Name: "Zulip server URL",
+				Name: msgFieldURLName.Message(),
 			}, {
 				Type: bridgev2.LoginInputFieldTypeEmail,
 				ID:   "email",
-				Name: "Email",
+				Name: msgFieldEmailName.Message(),
 			}, {
 				Type:    bridgev2.LoginInputFieldTypeToken,
 				ID:      "token",
-				Name:    "API key",
+				Name:    msgFieldTokenName.Message(),
 				Pattern: "^[A-Za-z0-9]{32}$",
 			}},
 		},
@@ -99,6 +99,6 @@ func (zl *ZulipLogin) SubmitUserInput(ctx context.Context, input map[string]stri
 	return &bridgev2.LoginStep{
 		Type:         bridgev2.LoginStepTypeComplete,
 		StepID:       "fi.mau.zulip.complete",
-		Instructions: fmt.Sprintf("Successfully logged in as %s", me.FullName),
+		Instructions: msgStepCompleteInstructions.Render(l10n.Params{"name": me.FullName}),
 	}, nil
 }

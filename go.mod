@@ -12,10 +12,10 @@ require (
 	github.com/rs/zerolog v1.35.1
 	github.com/samber/slog-zerolog/v2 v2.9.2
 	github.com/stretchr/testify v1.12.0
-	go.mau.fi/util v0.11.1
+	go.mau.fi/util v0.11.2-0.20261123232031-42f343a1bef8
 	golang.org/x/net v0.62.0
 	gopkg.in/yaml.v3 v3.0.1
-	maunium.net/go/mautrix v0.33.0
+	maunium.net/go/mautrix v0.33.1-0.20261124181705-cd9fbdda8ed9
 )
 
 require (

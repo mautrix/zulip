@@ -45,9 +45,10 @@ func (zl *ZulipLogin) Start(ctx context.Context) (*bridgev2.LoginStep, error) {
 		StepID: "fi.mau.zulip.apitoken",
 		UserInputParams: &bridgev2.LoginUserInputParams{
 			Fields: []bridgev2.LoginInputDataField{{
-				Type: bridgev2.LoginInputFieldTypeURL,
-				ID:   "url",
-				Name: msgFieldURLName.Message(),
+				Type:        bridgev2.LoginInputFieldTypeURL,
+				ID:          "url",
+				Name:        msgFieldURLName.Message(),
+				Placeholder: l10n.Unlocalized("https://example.zulipchat.com"),
 			}, {
 				Type: bridgev2.LoginInputFieldTypeEmail,
 				ID:   "email",
